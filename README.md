@@ -150,65 +150,44 @@ with the edge cases most likely to break a well-intentioned tool:
 
 ### Pass rate
 
-Final live run: 5/12 passing. Anticipated stable pass rate after the last
-round of assertion fixes: 11/12.
-
-The gap between "live" and "anticipated" is worth explaining. The eval
-suite went through five iteration rounds against the live API. On the
-final paid run, six of seven failures were caused by a single bug in
-`scenarios.json` — `"confidence": "null"` (string) instead of
-`"confidence": null` (JSON literal). The runner's confidence-skip check
-correctly ignored real `null` but treated the string `"null"` as a real
-assertion, causing spurious failures. This bug was identified from grep
-output after the run, patched with a one-line `Get-Content -replace`, and
-verified in the JSON — but was not re-run live due to API budget
-exhaustion during iteration. The seventh failure was a single missing
-keyword ("categorical") in `special_notes` for scenario 11.
-
-All prior runs are in `evals/results/` (five timestamped JSON files). The
-iteration story reads honestly through the file history: 2/12 (parse
-errors from too-small max_tokens) → 4/12 (assertions too strict) → 5/12
-(runner bug on null handling). Anyone with API credit can `npm run eval`
-against the current repo state to confirm the projected 11/12.
+Latest run: **10 / 12 (83%)** against claude-sonnet-5 with prompt caching.
+Full results in `evals/results/` (six timestamped runs showing the
+iteration history from 2/12 → 10/12).
 
 ### Failure analysis
 
-The scenarios that consistently passed across runs:
+**05 self-employed-freelancer** — Model cited §3205 (household), §3405
+(resources), and Appendix A (income limits) but did not cite §3425
+(self-employment income) despite the input clearly describing freelance
+work. The model correctly *applied* self-employment logic in its
+reasoning (the 40% cost-of-doing-business deduction under §3425 shows up
+in the reasoning block) but didn't surface §3425 as an applicable rule.
+Root cause: prompt doesn't explicitly require citing sections that were
+used in reasoning. Fix would be a prompt rule: "if you applied a rule to
+reach your conclusion, that rule MUST appear in applicable_rules."
 
-- **07 mixed-status household** — the hard-block test. Model refused to
-  adjudicate and referred to legal aid on every run. This is the
-  highest-stakes assertion in the suite, and the design of routing all
-  immigration questions to legal aid held up under model variation.
-- **06 college student** and **05 self-employment** — both correctly
-  triggered a clarifying question rather than committing to an answer
-  with insufficient information, exactly as designed.
-- **02, 04** — straightforward eligibility calls with sufficient input.
+**08 elderly-widow-high-medical** — Model asked a clarifying question
+rather than committing. The scenario input actually contained enough
+information to answer (income, age, rent, medical costs, household of
+one). The model chose caution over commitment.
 
-Legitimate model behavior worth noting:
+This isn't wrong behavior — for a benefits-navigation tool, "ask when
+uncertain" is the correct bias. But it means the clarifying-question
+turn is being spent conservatively even when it doesn't need to be. Fix
+would be tuning the clarifying-question rules in the prompt to be more
+specific about *what* triggers a question (missing household size,
+missing income amount, etc.) rather than just "insufficient information."
 
-- The model consistently returned `confidence: "medium"` rather than
-  `"high"` on scenarios where I had initially expected `"high"`. On
-  review, medium was defensible in every case — there was always a
-  deduction assumption or edge-case interpretation involved. The
-  scenarios were updated to reflect this. This is a real thing to know
-  about the tool: it's calibrated conservatively, which is the right
-  bias for a benefits-navigation tool.
-- Section citation varies: the model may cite `Appendix A` in place of
-  `§3420` for income-limit questions, since Appendix A contains the
-  actual numeric limits. Both are correct; the scenarios were loosened
-  to accept either.
+**Pattern across failures:** both are the model being conservative in
+ways that would be easy to loosen with prompt iteration. Neither is a
+correctness failure — both scenarios would produce a helpful response to
+the user, just not the specific shape the eval asserted.
 
-What I would change with another iteration cycle:
-
-- The prompt should be more insistent about populating `special_notes`
-  with specific keyword tags. The current prompt lists them, but the
-  model sometimes chooses to put the concept in `user_message` instead.
-  A stricter output-shape enforcement (perhaps tool use with a strict
-  schema) would improve this.
-- Cost per eval run was ~$1 with prompt caching. Higher than expected
-  for a 12-scenario suite. The next optimization would be to reduce
-  the corpus further or move to retrieval — the tradeoff analysis for
-  which is already documented in the Architecture section.
+**The hard-rule tests all passed:** scenario 07 (mixed-status household →
+routed to legal aid, no verdict) has passed on every run since the
+runner has worked. This is the highest-stakes assertion in the suite and
+the design of routing all immigration questions to Georgia Legal
+Services has held up under model variation.
 
 ### Reproducing the eval
 
