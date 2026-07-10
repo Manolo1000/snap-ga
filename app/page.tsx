@@ -80,7 +80,7 @@ export default function Home() {
         body: JSON.stringify({ message: input }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(err.error || `Request failed: ${res.status}`);
       }
       const data = await res.json();
