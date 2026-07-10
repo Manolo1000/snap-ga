@@ -4,7 +4,7 @@ A tool that translates Georgia's 400-page SNAP policy manual into a
 plain-language answer to one question: *"Do I probably qualify, and how do
 I apply?"*
 
-**Live demo:** [TODO: add Vercel URL after deploy]
+![SNAP-GA rendering a result card for an elderly single-earner household](docs/screenshot.png)
 
 ---
 

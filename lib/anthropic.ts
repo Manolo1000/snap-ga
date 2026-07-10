@@ -8,7 +8,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { MODEL } from "./prompt.js";
+import { MODEL } from "./prompt";
 
 const client = new Anthropic();
 

@@ -13,12 +13,34 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
-    "lib": ["ES2022"],
-    "types": ["node"],
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ],
     "paths": {
-    "@/*": ["./*"]
-    }
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowJs": true,
+    "incremental": true,
+    "jsx": "react-jsx",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["lib/**/*.ts", "evals/**/*.ts"],
-  "exclude": ["node_modules", "evals/results"]
+  "include": [
+    "lib/**/*.ts",
+    "evals/**/*.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "evals/results"
+  ]
 }

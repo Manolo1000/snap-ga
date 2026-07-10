@@ -264,7 +264,7 @@ export default function Home() {
         <p>
           Grounded in the Georgia DFCS SNAP Policy Manual (MT-87, June 2026).{" "}
           <a
-            href="https://github.com/YOUR_USERNAME/snap-ga"
+            href="https://github.com/Manolo1000/snap-ga"
             className="underline"
           >
             Source on GitHub
