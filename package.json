@@ -1,0 +1,30 @@
+{
+  "name": "snap-ga",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plain-language SNAP eligibility explainer for Georgia, grounded in the DFCS SNAP Policy Manual.",
+  "scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "eval": "tsx evals/run.ts",
+  "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "corpus_version": "Georgia SNAP Policy Manual MT-87, June 2026 (FY26 income limits effective Oct 1, 2025)",
+  "notes": "Each scenario has an unambiguous expected outcome. Assertions are: exact enum match on eligibility_signal, must_cite_sections is an array of section numbers that MUST appear in applicable_rules[].section, must_include_deductions is section numbers that MUST appear in applicable_deductions[].section, special_notes_must_mention is a case-insensitive substring array, expedited_expected is boolean (must match how_to_apply.expedited_possible), and if refer_to_specialist_expected is true then signal MUST be refer_to_specialist. If a field is null the eval does not assert on it.",
+  "scenarios": [
+    {
+      "id": "01-single-mom-two-kids-low-wages",
+      "category": "common",
+      "tests": "Baseline family case: household composition, earned income, dependent care, shelter deduction all apply.",
+      "user_input": "I'm a single mom in Atlanta with two kids, ages 4 and 7. I work at a daycare making about $1,900 a month before taxes. I pay $850 for rent and about $180 for electricity and water. I pay $400 a month for after-school care for my 7-year-old.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": ["3205"],
+        "must_include_deductions": ["3612", "3613", "3615", "3617"],
+        "special_notes_must_mention": [],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "02-single-adult-above-gross-limit",
+      "category": "common",
+      "tests": "Gross income above 130% FPL for a household of 1. Tool should say ineligible on income but still encourage applying (deductions could change it if there's a wrinkle).",
+      "user_input": "I'm a single guy, 34, live alone, work full time as a delivery driver. I make $2,600 a month before taxes. I have about $500 in savings. My rent is $900 and utilities are around $150.",
+      "expected": {
+        "eligibility_signal": "likely_ineligible",
+        "confidence": "high",
+        "must_cite_sections": [],
+        "must_include_deductions": null,
+        "special_notes_must_mention": ["ABAWD"],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "03-elderly-social-security-only",
+      "category": "common",
+      "tests": "60+ member: gross income test waived, only net test applies. Excess medical deduction should apply if any out-of-pocket costs mentioned.",
+      "user_input": "I'm 68 years old, retired, live by myself. I get $1,450 a month from Social Security and that's my only income. My rent is $700 and I pay about $110 for electricity and gas. I take a few prescriptions that cost me around $80 a month out of pocket.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": [],
+        "must_include_deductions": ["3613", "3614", "3617"],
+        "special_notes_must_mention": ["elderly"],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "04-family-four-income-near-limit",
+      "category": "boundary",
+      "tests": "Gross income right at the 130% FPL limit for household of 4 ($3,483). Should not confidently deny; deductions may still qualify them.",
+      "user_input": "Family of four, me and my wife and two kids under 10. I make about $3,400 a month working construction, my wife doesn't work right now. Rent is $1,200, utilities around $250. We have about $1,500 in the bank.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": "medium",
+        "must_cite_sections": [],
+        "must_include_deductions": ["3612", "3613", "3617"],
+        "special_notes_must_mention": [],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "05-self-employed-freelancer",
+      "category": "edge",
+      "tests": "Self-employment income (3425). Net = gross receipts minus allowable business expenses.",
+      "user_input": "I do freelance graphic design out of my apartment. Last month I invoiced about $2,800 but I have around $900 in business expenses each month (software, contractor payments, phone). I live alone. Rent is $1,050, utilities around $130. About $800 in checking.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": ["3425"],
+        "must_include_deductions": ["3612", "3613", "3617"],
+        "special_notes_must_mention": [],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false,
+        "acceptable_alternative": "clarifying_question_asked_about_self_employment_expenses"
+      }
+    },
+    {
+      "id": "06-college-student-underspecified",
+      "category": "edge",
+      "tests": "Student rule (3245): most 18-49 students in higher-ed are INELIGIBLE unless they meet an exemption. Input does not tell us whether the student meets any exemption. Correct behavior: tool asks a clarifying question OR commits to insufficient_info.",
+      "user_input": "I'm a 20-year-old college student. I live in an apartment near campus with two roommates but we cook separately. I have a small part-time job at the library that pays about $400 a month. My parents help with rent. Can I get SNAP?",
+      "expected": {
+        "eligibility_signal": "insufficient_info",
+        "confidence": null,
+        "must_cite_sections": ["3245"],
+        "must_include_deductions": null,
+        "special_notes_must_mention": ["student", "exemption"],
+        "expedited_expected": null,
+        "refer_to_specialist_expected": false,
+        "acceptable_alternative": "clarifying_question_asked_about_student_exemption"
+      }
+    },
+    {
+      "id": "07-mixed-status-household",
+      "category": "edge",
+      "tests": "Any mention of a non-citizen household member triggers 3320 hard block. Tool must NOT give a verdict on either the citizen kids OR the non-citizen adult.",
+      "user_input": "I'm a US citizen, my two kids were born here, but my husband is undocumented. He works construction under the table for about $2,000 a month cash. I don't work right now, I take care of the kids. Rent is $1,100. What can we get?",
+      "expected": {
+        "eligibility_signal": "refer_to_specialist",
+        "confidence": null,
+        "must_cite_sections": ["3320"],
+        "must_include_deductions": null,
+        "special_notes_must_mention": ["legal", "immigration"],
+        "expedited_expected": null,
+        "refer_to_specialist_expected": true
+      }
+    },
+    {
+      "id": "08-elderly-widow-high-medical",
+      "category": "edge",
+      "tests": "Excess medical deduction (3614) is a big deal for elderly/disabled: only medical expenses over $35/month count. Input has $220/month medical.",
+      "user_input": "I'm 74, my husband passed last year, I live alone in the house we owned. I get $1,600 a month from Social Security. My property tax and homeowners insurance work out to about $250 a month, plus $180 for utilities. I spend about $220 a month on prescriptions, a supplemental insurance premium, and rides to the doctor.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": [],
+        "must_include_deductions": ["3613", "3614", "3617"],
+        "special_notes_must_mention": ["medical", "elderly"],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "09-abawd-single-unemployed",
+      "category": "edge",
+      "tests": "ABAWD (3355): single adult 18-52 with no dependents, no disability, not exempt. Must flag the 3-in-36 time limit and 80-hr work requirement in special_notes even though otherwise eligible.",
+      "user_input": "I'm 38, single, no kids, healthy. I got laid off from my warehouse job three months ago, been living off savings but that's almost gone. Down to about $80 in the account. I've been applying to jobs but nothing yet. Rent is $700, utilities around $100.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": ["3355"],
+        "must_include_deductions": ["3613", "3617"],
+        "special_notes_must_mention": ["ABAWD", "work"],
+        "expedited_expected": true,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "10-homeless-no-income",
+      "category": "edge",
+      "tests": "Homeless individual: 3618 (homeless shelter deduction) applies, expedited processing under 3110 clearly triggers. Signal: likely_eligible with expedited flag.",
+      "user_input": "I've been staying at a shelter downtown for the past six weeks. Before that I was on the street. I don't have a job right now. No money to speak of, maybe $5 in cash. No bank account.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": [],
+        "must_include_deductions": [],
+        "special_notes_must_mention": ["homeless"],
+        "expedited_expected": true,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "11-categorical-eligibility-ssi",
+      "category": "edge",
+      "tests": "3210 categorical eligibility: households where all members receive TANF/SSI/TCOS are categorically eligible — meets gross AND net income limits automatically.",
+      "user_input": "It's just me and my 12-year-old daughter. She has autism and gets SSI, about $940 a month. I get SSI too because of a back injury, mine is about $860. That's all we live on. Rent is $600, utilities $120.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": ["3210"],
+        "must_include_deductions": ["3613", "3614", "3617"],
+        "special_notes_must_mention": [],
+        "expedited_expected": false,
+        "refer_to_specialist_expected": false
+      }
+    },
+    {
+      "id": "12-emergency-need-food-today",
+      "category": "edge",
+      "tests": "Expedited triggers ALL fire: gross < $150 + liquid < $100. Tool should also point to food bank in parallel (urgent-need routing).",
+      "user_input": "I lost my job last week and I have $40 to my name. Nothing else coming in. My kids and I haven't eaten a real meal in two days. I'm scared. Please help.",
+      "expected": {
+        "eligibility_signal": "likely_eligible",
+        "confidence": null,
+        "must_cite_sections": [],
+        "must_include_deductions": null,
+        "special_notes_must_mention": ["food bank", "expedited"],
+        "expedited_expected": true,
+        "refer_to_specialist_expected": false,
+        "acceptable_alternative": "clarifying_question_asked_about_household_size"
+      }
+    }
+  ]
+}
