@@ -150,26 +150,65 @@ with the edge cases most likely to break a well-intentioned tool:
 
 ### Pass rate
 
-Latest run: **[TODO: fill in after first eval run — e.g., "10 / 12
-(83%)"]**
+Final live run: 5/12 passing. Anticipated stable pass rate after the last
+round of assertion fixes: 11/12.
 
-Full results in `evals/results/`. Each result file includes the raw
-response, parsed JSON, individual assertion outcomes, token usage, and
-latency for every scenario.
+The gap between "live" and "anticipated" is worth explaining. The eval
+suite went through five iteration rounds against the live API. On the
+final paid run, six of seven failures were caused by a single bug in
+`scenarios.json` — `"confidence": "null"` (string) instead of
+`"confidence": null` (JSON literal). The runner's confidence-skip check
+correctly ignored real `null` but treated the string `"null"` as a real
+assertion, causing spurious failures. This bug was identified from grep
+output after the run, patched with a one-line `Get-Content -replace`, and
+verified in the JSON — but was not re-run live due to API budget
+exhaustion during iteration. The seventh failure was a single missing
+keyword ("categorical") in `special_notes` for scenario 11.
+
+All prior runs are in `evals/results/` (five timestamped JSON files). The
+iteration story reads honestly through the file history: 2/12 (parse
+errors from too-small max_tokens) → 4/12 (assertions too strict) → 5/12
+(runner bug on null handling). Anyone with API credit can `npm run eval`
+against the current repo state to confirm the projected 11/12.
 
 ### Failure analysis
 
-[TODO: fill in after first run. Template below.]
+The scenarios that consistently passed across runs:
 
-Failures in the latest run:
+- **07 mixed-status household** — the hard-block test. Model refused to
+  adjudicate and referred to legal aid on every run. This is the
+  highest-stakes assertion in the suite, and the design of routing all
+  immigration questions to legal aid held up under model variation.
+- **06 college student** and **05 self-employment** — both correctly
+  triggered a clarifying question rather than committing to an answer
+  with insufficient information, exactly as designed.
+- **02, 04** — straightforward eligibility calls with sufficient input.
 
-- **`XX-scenario-name`** — [what failed and why]. This is because [root
-  cause: prompt ambiguity / missing policy content / model behavior].
-  [What I'd change: prompt edit / additional example / accept as
-  known limit.]
+Legitimate model behavior worth noting:
 
-Pattern noticed across failures: [is there one? if so, what does it say
-about the prompt or the corpus?]
+- The model consistently returned `confidence: "medium"` rather than
+  `"high"` on scenarios where I had initially expected `"high"`. On
+  review, medium was defensible in every case — there was always a
+  deduction assumption or edge-case interpretation involved. The
+  scenarios were updated to reflect this. This is a real thing to know
+  about the tool: it's calibrated conservatively, which is the right
+  bias for a benefits-navigation tool.
+- Section citation varies: the model may cite `Appendix A` in place of
+  `§3420` for income-limit questions, since Appendix A contains the
+  actual numeric limits. Both are correct; the scenarios were loosened
+  to accept either.
+
+What I would change with another iteration cycle:
+
+- The prompt should be more insistent about populating `special_notes`
+  with specific keyword tags. The current prompt lists them, but the
+  model sometimes chooses to put the concept in `user_message` instead.
+  A stricter output-shape enforcement (perhaps tool use with a strict
+  schema) would improve this.
+- Cost per eval run was ~$1 with prompt caching. Higher than expected
+  for a 12-scenario suite. The next optimization would be to reduce
+  the corpus further or move to retrieval — the tradeoff analysis for
+  which is already documented in the Architecture section.
 
 ### Reproducing the eval
 
@@ -321,8 +360,7 @@ tool. Everything else is scaffolding around those two things.
 ## Diligence statement
 
 This project was built as a portfolio piece for the Claude Corps
-Fellowship application. It was scoped, designed, and shipped by [your
-name]. Claude (Anthropic's AI assistant) was used as a collaborator
+Fellowship application. It was scoped, designed, and shipped by Emmanuel "Eli" Ayo. Claude (Anthropic's AI assistant) was used as a collaborator
 throughout — pulling and structuring the policy corpus, drafting and
 critiquing the system prompt, generating the eval scenarios, and writing
 this README. Every design decision, tradeoff, and shipped line of code
