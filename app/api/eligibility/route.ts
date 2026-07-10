@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   let message: string;
   try {
     const body = (await req.json()) as { message?: string };
-    message = body.message;
+    message = body.message ?? "";
     if (
       !message ||
       typeof message !== "string" ||
