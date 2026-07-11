@@ -4,6 +4,12 @@ A tool that translates Georgia's 400-page SNAP policy manual into a
 plain-language answer to one question: *"Do I probably qualify, and how do
 I apply?"*
 
+
+**Try It - Live demo:** [Interactive walkthrough on Claude Artifacts](YOUR_ARTIFACT_URL) — pre-computed responses from the eval suite, showing what the tool produces for common scenarios (elderly on Social Security, working single mom, mixed-status household, ABAWD, homeless).
+
+For the live-API version: clone the repo, `npm install`, add `ANTHROPIC_API_KEY` to `.env.local`, `npm run dev`. Local screenshot below.
+
+
 ![SNAP-GA rendering a result card for an elderly single-earner household](docs/screenshot.png)
 
 ---
